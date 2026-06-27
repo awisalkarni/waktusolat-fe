@@ -42,6 +42,8 @@ export interface SolatResponse {
   monthName: string // e.g. "JUN"
   monthNumber: number
   today: SolatDay | null
+  /** The day after today, so the client can show Subuh after Isyak passes. */
+  tomorrow: SolatDay | null
   prayers: SolatDay[]
 }
 

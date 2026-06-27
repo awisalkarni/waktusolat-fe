@@ -25,7 +25,11 @@ const { data: solat, pending: solatPending, error: solatError } =
   )
 
 const today = computed(() => solat.value?.today ?? null)
-const next = useNextPrayer(() => today.value?.raw ?? null)
+const tomorrow = computed(() => solat.value?.tomorrow ?? null)
+const next = useNextPrayer(() => ({
+  today: today.value?.raw,
+  tomorrow: tomorrow.value?.raw,
+}))
 
 const monthLabel = computed(() =>
   solat.value

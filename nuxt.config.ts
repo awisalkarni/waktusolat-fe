@@ -14,8 +14,9 @@ export default defineNuxtConfig({
   routeRules: {
     // Zone list rarely changes — cache aggressively on the server/edge.
     '/api/zones': { swr: 86400 },
-    // Monthly prayer times change once a day at most.
-    '/api/solat/**': { swr: 3600 },
+    // Handler response (today/tomorrow highlighting) changes daily, but the
+    // upstream API call itself is cached for a year via defineCachedFunction.
+    '/api/solat/**': { swr: 60 },
   },
 
   app: {

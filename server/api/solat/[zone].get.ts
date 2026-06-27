@@ -31,13 +31,21 @@ function fmtTime(ts: number): string {
   })
 }
 
-/** Today's calendar day-of-month in Asia/Kuala_Lumpur (1–31). */
-function todayKLMonthDay(): number {
-  const parts = new Intl.DateTimeFormat('en-GB', {
+/** Current calendar values in Asia/Kuala_Lumpur. */
+function nowKL() {
+  const dtf = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kuala_Lumpur',
+    year: 'numeric',
+    month: '2-digit',
     day: '2-digit',
-  }).formatToParts(new Date())
-  return Number(parts.find((p) => p.type === 'day')?.value ?? NaN)
+  })
+  const parts = dtf.formatToParts(new Date())
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
+  return {
+    year: Number(get('year')),
+    month: Number(get('month')),
+    day: Number(get('day')),
+  }
 }
 
 /** Narrow an unknown upstream into a usable UpstreamSolatResponse or throw. */
@@ -46,20 +54,52 @@ function parseSolat(raw: unknown): UpstreamSolatResponse {
     raw &&
     typeof raw === 'object' &&
     'prayers' in raw &&
-    Array.isArray((raw as { prayers?: unknown }).prayers) &&
+    Array.isArray(raw.prayers) &&
     'zone' in raw &&
-    typeof (raw as { zone?: unknown }).zone === 'string' &&
+    typeof raw.zone === 'string' &&
     'year' in raw &&
-    typeof (raw as { year?: unknown }).year === 'number' &&
+    typeof raw.year === 'number' &&
     'month' in raw &&
-    typeof (raw as { month?: unknown }).month === 'string' &&
+    typeof raw.month === 'string' &&
     'month_number' in raw &&
-    typeof (raw as { month_number?: unknown }).month_number === 'number'
+    typeof raw.month_number === 'number'
   ) {
     return raw as UpstreamSolatResponse
   }
   throw new Error('Respon API hulu tidak sah.')
 }
+
+const fetchUpstreamMonth = defineCachedFunction(
+  async (
+    apiUrl: string,
+    zone: string,
+    year: number,
+    month: number,
+  ): Promise<UpstreamSolatResponse> => {
+    let raw: unknown
+    try {
+      raw = await $fetch(`${apiUrl}/v2/solat/${encodeURIComponent(zone)}`, {
+        query: { year, month },
+        headers: { accept: 'application/json' },
+        timeout: 8000,
+      })
+    } catch {
+      throw createError({
+        statusCode: 502,
+        statusMessage: 'Gagal mengambil waktu solat dari API hulu.',
+      })
+    }
+    return parseSolat(raw)
+  },
+  {
+    name: 'solat-month',
+    // Data for a zone+year+month never changes within the year, so cache
+    // aggressively. This minimizes calls to api.waktusolat.app.
+    maxAge: 365 * 24 * 60 * 60,
+    getKey: (apiUrl: string, zone: string, year: number, month: number) =>
+      `${zone}:${year}:${month}`,
+  },
+)
 
 function toSolatDay(p: UpstreamPrayer): SolatDay {
   const times = {} as Record<keyof PrayerTimestamps, string>
@@ -94,47 +134,46 @@ export default defineEventHandler(async (event) => {
 
   const { apiUrl } = useRuntimeConfig(event)
   const query = getQuery(event)
+  const kl = nowKL()
 
-  const now = new Date()
   const year =
-    query.year && !isNaN(Number(query.year))
-      ? Number(query.year)
-      : now.getFullYear()
-  const month = // month_number diperlukan jika query.month diberikan (default: bulan semasa)
+    query.year && !isNaN(Number(query.year)) ? Number(query.year) : kl.year
+  const month =
     query.month != null && !isNaN(Number(query.month))
       ? Number(query.month)
-      : now.getMonth() + 1
+      : kl.month
 
-  let raw: unknown
-  try {
-    raw = await $fetch(`${apiUrl}/v2/solat/${encodeURIComponent(zone)}`, {
-      query: { year, month },
-      headers: { accept: 'application/json' },
-      timeout: 8000,
-    })
-  } catch {
-    throw createError({
-      statusCode: 502,
-      statusMessage: 'Gagal mengambil waktu solat dari API hulu.',
-    })
-  }
-
-  let parsed: UpstreamSolatResponse
-  try {
-    parsed = parseSolat(raw)
-  } catch {
-    throw createError({
-      statusCode: 502,
-      statusMessage: 'Respon API hulu tidak dapat ditafsir.',
-    })
-  }
-
+  const parsed = await fetchUpstreamMonth(apiUrl, zone, year, month)
   const prayers = parsed.prayers.map(toSolatDay)
-  const todayDay = todayKLMonthDay()
+
   const today =
-    year === now.getFullYear() && month === now.getMonth() + 1
-      ? prayers.find((p) => p.day === todayDay) ?? null
+    year === kl.year && month === kl.month
+      ? prayers.find((p) => p.day === kl.day) ?? null
       : null
+
+  let tomorrow: SolatDay | null = null
+  if (today) {
+    const lastDayOfMonth = Math.max(...prayers.map((p) => p.day))
+    if (today.day < lastDayOfMonth) {
+      tomorrow = prayers.find((p) => p.day === today.day + 1) ?? null
+    } else {
+      // Month boundary: ask upstream for the next month and grab day 1.
+      const nextMonth = month === 12 ? 1 : month + 1
+      const nextYear = month === 12 ? year + 1 : year
+      try {
+        const nextParsed = await fetchUpstreamMonth(
+          apiUrl,
+          zone,
+          nextYear,
+          nextMonth,
+        )
+        tomorrow =
+          nextParsed.prayers.map(toSolatDay).find((p) => p.day === 1) ?? null
+      } catch {
+        tomorrow = null
+      }
+    }
+  }
 
   // The upstream `last_updated` field is null in practice; omit it from our
   // public shape to avoid implying freshness we can’t prove.
@@ -144,6 +183,7 @@ export default defineEventHandler(async (event) => {
     monthName: parsed.month,
     monthNumber: parsed.month_number,
     today,
+    tomorrow,
     prayers,
   } satisfies SolatResponse
 })

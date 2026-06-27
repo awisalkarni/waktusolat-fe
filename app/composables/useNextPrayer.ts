@@ -1,4 +1,8 @@
-import { PRAYER_ORDER, PRAYER_LABELS, type PrayerTimestamps } from '#shared/types/waktusolat'
+import {
+  PRAYER_ORDER,
+  PRAYER_LABELS,
+  type PrayerTimestamps,
+} from '#shared/types/waktusolat'
 
 export interface NextPrayerState {
   name: keyof PrayerTimestamps
@@ -9,12 +13,18 @@ export interface NextPrayerState {
   countdown: string
 }
 
+export interface NextPrayerInput {
+  today: PrayerTimestamps | null | undefined
+  tomorrow: PrayerTimestamps | null | undefined
+}
+
 /**
- * Given today's raw prayer timestamps (Unix seconds), compute the next upcoming
- * waktu and a live countdown. Updates every second via setInterval on the
- * client; SSR-safe (returns a static initial state).
+ * Given today's and tomorrow's raw prayer timestamps (Unix seconds), compute
+ * the next upcoming waktu and a live countdown. After today's Isyak passes,
+ * tomorrow's Subuh becomes the next prayer. Updates every second via
+ * setInterval on the client; SSR-safe (returns a static initial state).
  */
-export function useNextPrayer(rawGetter: () => PrayerTimestamps | null | undefined) {
+export function useNextPrayer(inputGetter: () => NextPrayerInput) {
   const state = reactive<NextPrayerState>({
     name: 'fajr',
     label: PRAYER_LABELS.fajr,
@@ -27,14 +37,18 @@ export function useNextPrayer(rawGetter: () => PrayerTimestamps | null | undefin
 
   function recompute() {
     const now = Date.now()
+    const { today, tomorrow } = inputGetter()
 
-    // Skip imsak for "next waktu" — it's a reminder 10min before subuh, not a
-    // solat. Find the first PRAYER_ORDER (after imsak) strictly in the future.
+    // Imsak is a pre-Subuh reminder, not a solat, so exclude it from "next".
     const order = PRAYER_ORDER.filter((k) => k !== 'imsak')
 
-    const raw = rawGetter()
-    for (const name of order) {
-      const at = (raw?.[name] ?? 0) * 1000
+    // Search today first, then tomorrow (so after Isyak we roll to Subuh).
+    const candidates = [
+      ...order.map((name) => ({ name, at: (today?.[name] ?? 0) * 1000 })),
+      ...order.map((name) => ({ name, at: (tomorrow?.[name] ?? 0) * 1000 })),
+    ]
+
+    for (const { name, at } of candidates) {
       if (at > now) {
         state.name = name
         state.label = PRAYER_LABELS[name]
@@ -45,7 +59,8 @@ export function useNextPrayer(rawGetter: () => PrayerTimestamps | null | undefin
       }
     }
 
-    // All of today's times have passed — next is tomorrow's subuh, unknown here.
+    // Both today and tomorrow have passed (unlikely unless the page is left
+    // open across two midnights without a refresh).
     state.name = 'fajr'
     state.label = PRAYER_LABELS.fajr
     state.at = 0
@@ -63,7 +78,7 @@ export function useNextPrayer(rawGetter: () => PrayerTimestamps | null | undefin
   })
 
   // Recompute on data change (e.g. zone switched).
-  watch(rawGetter, recompute, { immediate: import.meta.client })
+  watch(inputGetter, recompute, { immediate: import.meta.client })
 
   return state
 }
