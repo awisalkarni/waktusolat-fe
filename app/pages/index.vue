@@ -49,9 +49,10 @@ const todayHeader = computed(() => {
 })
 
 function formatNextAt(ms: number): string {
-  return new Intl.DateTimeFormat('ms-MY', {
+  return new Intl.DateTimeFormat('en-US', {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: true,
     timeZone: 'Asia/Kuala_Lumpur',
   }).format(new Date(ms))
 }

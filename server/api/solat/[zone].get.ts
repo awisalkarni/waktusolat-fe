@@ -20,14 +20,13 @@ interface UpstreamSolatResponse {
   prayers: UpstreamPrayer[]
 }
 
-/** Format a Unix-second timestamp as "HH:mm" in Asia/Kuala_Lumpur. */
+/** Format a Unix-second timestamp as "hh:mm AM/PM" in Asia/Kuala_Lumpur. */
 function fmtTime(ts: number): string {
-  // toLocaleTimeString with 24h + Asia/Kuala_Lumpur is locale-stable in Node 22+.
-  return new Date(ts * 1000).toLocaleTimeString('en-GB', {
+  return new Date(ts * 1000).toLocaleTimeString('en-US', {
     timeZone: 'Asia/Kuala_Lumpur',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
+    hour12: true,
   })
 }
 
