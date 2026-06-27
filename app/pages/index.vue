@@ -195,11 +195,11 @@ onBeforeUnmount(() => clearTimeout(countdownTimer))
               <table class="w-full text-sm">
                 <thead class="bg-slate-50 text-xs uppercase text-slate-500">
                   <tr>
-                    <th class="px-3 py-2 text-left">Hari</th>
+                    <th class="px-2 py-2 text-left">Hari</th>
                     <th
                       v-for="key in PRAYER_ORDER"
                       :key="key"
-                      class="px-3 py-2 text-right"
+                      class="min-w-[4.5rem] px-2 py-2 text-right whitespace-nowrap"
                     >
                       {{ PRAYER_LABELS[key as keyof PrayerTimestamps] }}
                     </th>
@@ -216,13 +216,13 @@ onBeforeUnmount(() => clearTimeout(countdownTimer))
                         : 'hover:bg-slate-50'
                     "
                   >
-                    <td class="px-3 py-2 font-medium text-slate-700">
+                    <td class="px-2 py-2 font-medium text-slate-700">
                       {{ p.day }}
                     </td>
                     <td
                       v-for="key in PRAYER_ORDER"
                       :key="key"
-                      class="px-3 py-2 text-right font-mono tabular-nums text-slate-900"
+                      class="min-w-[4.5rem] px-2 py-2 text-right font-mono tabular-nums text-slate-900 whitespace-nowrap"
                     >
                       {{ p.times[key as keyof PrayerTimestamps] }}
                     </td>
