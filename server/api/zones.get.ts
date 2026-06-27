@@ -1,4 +1,4 @@
-import type { Zone, ZoneGroup } from '../../shared/types/waktusolat'
+import type { Zone, ZoneGroup } from '#shared/types/waktusolat'
 
 /**
  * GET /api/zones

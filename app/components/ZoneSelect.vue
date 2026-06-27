@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ZoneGroup } from '../../shared/types/waktusolat'
+import type { ZoneGroup } from '#shared/types/waktusolat'
 
 defineProps<{
   groups: ZoneGroup[]

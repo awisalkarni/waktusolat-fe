@@ -3,7 +3,7 @@ import {
   type PrayerTimestamps,
   type SolatDay,
   type SolatResponse,
-} from '../../../shared/types/waktusolat'
+} from '#shared/types/waktusolat'
 
 /** Raw upstream shape of GET /v2/solat/{zone} (Unix-second timestamps). */
 interface UpstreamPrayer extends PrayerTimestamps {

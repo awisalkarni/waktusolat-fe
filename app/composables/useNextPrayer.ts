@@ -1,8 +1,4 @@
-import {
-  PRAYER_ORDER,
-  PRAYER_LABELS,
-  type PrayerTimestamps,
-} from '../../shared/types/waktusolat'
+import { PRAYER_ORDER, PRAYER_LABELS, type PrayerTimestamps } from '#shared/types/waktusolat'
 
 export interface NextPrayerState {
   name: keyof PrayerTimestamps

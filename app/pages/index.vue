@@ -5,7 +5,7 @@ import {
   type PrayerTimestamps,
   type SolatResponse,
   type ZoneGroup,
-} from '../../shared/types/waktusolat'
+} from '#shared/types/waktusolat'
 
 useHead({ title: 'Waktu Solat Malaysia' })
 
