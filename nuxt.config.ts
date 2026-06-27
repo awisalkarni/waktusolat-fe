@@ -19,6 +19,17 @@ export default defineNuxtConfig({
     '/api/solat/**': { swr: 60 },
   },
 
+  nitro: {
+    // Persist cached upstream responses as JSON files in the project root so
+    // they survive builds and PM2 restarts.
+    storage: {
+      cache: {
+        driver: 'fs',
+        base: './.cache/nitro',
+      },
+    },
+  },
+
   app: {
     head: {
       title: 'Waktu Solat Malaysia',
