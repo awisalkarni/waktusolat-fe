@@ -33,7 +33,7 @@ const next = useNextPrayer(() => ({
 }))
 
 /** Current prayer = the latest one today whose time has already passed. */
-const nowSec = ref(Math.floor(Date.now() / 1000))
+const nowSec = ref(0)
 const currentPrayerName = computed<keyof PrayerTimestamps | null>(() => {
   const raw = today.value?.raw
   if (!raw) return null
@@ -46,11 +46,51 @@ const currentPrayerName = computed<keyof PrayerTimestamps | null>(() => {
 
 let currentPrayerTimer: ReturnType<typeof setInterval> | undefined
 onMounted(() => {
+  nowSec.value = Math.floor(Date.now() / 1000)
   currentPrayerTimer = setInterval(() => {
     nowSec.value = Math.floor(Date.now() / 1000)
   }, 60_000)
 })
 onBeforeUnmount(() => clearInterval(currentPrayerTimer))
+
+const notifications = usePrayerNotifications(
+  () => today.value?.raw,
+  () => tomorrow.value?.raw,
+)
+
+const installPrompt = ref<BeforeInstallPromptEvent | null>(null)
+const isInstallable = ref(false)
+const isIOS = ref(false)
+
+if (import.meta.client) {
+  isIOS.value = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault()
+    installPrompt.value = e as BeforeInstallPromptEvent
+    isInstallable.value = true
+  })
+}
+
+async function installPWA() {
+  if (!installPrompt.value) return
+  await installPrompt.value.prompt()
+  const { outcome } = await installPrompt.value.userChoice
+  if (outcome === 'accepted') {
+    isInstallable.value = false
+    installPrompt.value = null
+  }
+}
+
+declare global {
+  interface WindowEventMap {
+    beforeinstallprompt: BeforeInstallPromptEvent
+  }
+}
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
 
 const monthLabel = computed(() =>
   solat.value
@@ -295,6 +335,67 @@ onBeforeUnmount(() => clearTimeout(countdownTimer))
                 </tbody>
               </table>
             </div>
+          </section>
+
+          <!-- PWA & notifications -->
+          <section
+            class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+          >
+            <h3 class="font-semibold text-slate-900">
+              Pasang aplikasi & pemberitahuan
+            </h3>
+            <p class="mt-1 text-sm text-slate-600">
+              Tambah ke skrin utama untuk akses pantas dan terima pemberitahuan
+              setiap waktu solat.
+            </p>
+
+            <div class="mt-4 flex flex-wrap gap-3">
+              <button
+                v-if="isInstallable"
+                class="inline-flex items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                @click="installPWA"
+              >
+                Pasang aplikasi
+              </button>
+
+              <button
+                v-else-if="isIOS"
+                class="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700"
+                disabled
+              >
+                iOS: Tekan <strong class="mx-1">Share → Add to Home Screen</strong>
+              </button>
+
+              <button
+                v-if="notifications.supported"
+                class="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                :class="
+                  notifications.permission.value === 'granted'
+                    ? 'bg-brand-100 text-brand-700'
+                    : 'bg-brand-600 text-white hover:bg-brand-700'
+                "
+                :disabled="notifications.permission.value === 'denied'"
+                @click="notifications.requestPermission"
+              >
+                <template v-if="notifications.permission.value === 'granted'">
+                  Pemberitahuan aktif
+                </template>
+                <template
+                  v-else-if="notifications.permission.value === 'denied'"
+                >
+                  Pemberitahuan disekat
+                </template>
+                <template v-else> Aktifkan pemberitahuan </template>
+              </button>
+            </div>
+
+            <p
+              v-if="notifications.permission.value === 'denied'"
+              class="mt-2 text-xs text-slate-500"
+            >
+              Anda perlu benarkan pemberitahuan dalam tetapan pelayar untuk
+              mengaktifkannya.
+            </p>
           </section>
         </div>
 
