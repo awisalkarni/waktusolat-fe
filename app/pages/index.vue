@@ -32,6 +32,26 @@ const next = useNextPrayer(() => ({
   tomorrow: tomorrow.value?.raw,
 }))
 
+/** Current prayer = the latest one today whose time has already passed. */
+const nowSec = ref(Math.floor(Date.now() / 1000))
+const currentPrayerName = computed<keyof PrayerTimestamps | null>(() => {
+  const raw = today.value?.raw
+  if (!raw) return null
+  // Walk backwards so the most recent prayer is found first.
+  for (const name of [...PRAYER_ORDER].reverse()) {
+    if (raw[name] <= nowSec.value) return name
+  }
+  return null
+})
+
+let currentPrayerTimer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  currentPrayerTimer = setInterval(() => {
+    nowSec.value = Math.floor(Date.now() / 1000)
+  }, 60_000)
+})
+onBeforeUnmount(() => clearInterval(currentPrayerTimer))
+
 const monthLabel = computed(() =>
   solat.value
     ? `${solat.value.monthName} ${solat.value.year}`
@@ -206,13 +226,19 @@ onBeforeUnmount(() => clearTimeout(countdownTimer))
                 :key="key"
                 class="flex items-center justify-between px-4 py-3 transition-all duration-500 ease-out"
                 :class="[
-                  next.name === key
+                  currentPrayerName === key
                     ? 'bg-brand-50 scale-[1.01] shadow-sm'
                     : 'hover:bg-slate-50',
                 ]"
               >
-                <span class="font-medium text-slate-700">
+                <span class="flex items-center gap-2 font-medium text-slate-700">
                   {{ PRAYER_LABELS[key as keyof PrayerTimestamps] }}
+                  <span
+                    v-if="next.name === key && currentPrayerName !== key"
+                    class="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-700"
+                  >
+                    Seterusnya
+                  </span>
                 </span>
                 <span class="font-mono text-lg tabular-nums text-slate-900">
                   {{ today!.times[key as keyof PrayerTimestamps] }}
