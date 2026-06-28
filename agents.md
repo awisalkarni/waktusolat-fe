@@ -110,6 +110,9 @@ Nginx config: `/etc/nginx/sites-available/waktusolatapp.com`
 
 - `NUXT_API_URL` — upstream API base (default: `https://api.waktusolat.app`)
 - `NUXT_PORT` — server port in production (PM2 sets `3000`)
+- `NUXT_PUBLIC_GA_ID` — Google Analytics 4 measurement ID (optional)
+- `NUXT_PUBLIC_DONATION_URL` — static donation/payment link (default: ToyyibPay link)
+- `NUXT_TOYYIBPAY_SECRET_KEY` + `NUXT_TOYYIBPAY_CATEGORY_CODE` — for dynamic ToyyibPay bills (optional)
 
 ## Notes for Agents
 
@@ -117,3 +120,4 @@ Nginx config: `/etc/nginx/sites-available/waktusolatapp.com`
 - Zone codes follow JAKIM format (e.g., `WLY01`, `SGR01`, `JHR02`).
 - Before changing server-route imports or shared types, run `pnpm build` locally; dev-only typecheck may pass while production bundling fails.
 - Keep the UI in Malay since the audience is Malaysian Muslims.
+- Analytics and donation are opt-in via environment variables; never commit secrets.

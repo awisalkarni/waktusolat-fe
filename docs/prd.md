@@ -47,7 +47,16 @@ Malaysian Muslims need quick, accurate access to daily prayer times (waktu solat
 - Scrollable table with the full month of prayer times.
 - Today's row highlighted.
 
-### 5.5 Caching & Performance
+### 5.5 Analytics
+- Optional Google Analytics 4 integration via `NUXT_PUBLIC_GA_ID`.
+- Loads gtag only on the client when configured.
+
+### 5.6 Donation
+- Footer donation section with the provided ToyyibPay donation link.
+- Displays a QR code generated from the donation URL.
+- Optional dynamic ToyyibPay bill creation via `POST /api/donate` for variable amounts.
+
+### 5.7 Caching & Performance
 - Zone list cached for 24 hours.
 - `/api/solat/{zone}` handler cached for 60 seconds (today/tomorrow highlighting changes daily).
 - Upstream month data cached for 1 year to minimize API calls.
@@ -116,6 +125,10 @@ Vue app (pages/index.vue)
 
 ### 8.10 Multi-Language Support
 - English variant for non-Malay speakers (Arabic transliteration stays consistent).
+
+### 8.11 Analytics Enhancements
+- Event tracking for zone changes, donation clicks, and prayer-time views.
+- Privacy-focused alternative (e.g., Plausible or Fathom) as a configurable option.
 
 ## 9. Deployment & Operations
 

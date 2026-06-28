@@ -9,6 +9,20 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Server-only: upstream waktu solat API base. Overridable via NUXT_API_URL.
     apiUrl: 'https://api.waktusolat.app',
+
+    // Server-only: ToyyibPay credentials for dynamic donation bills.
+    // If you prefer a static link, set NUXT_PUBLIC_DONATION_URL instead.
+    toyyibpaySecretKey: '',
+    toyyibpayCategoryCode: '',
+
+    public: {
+      // Google Analytics 4 measurement ID (e.g. G-XXXXXXXXXX).
+      gaId: '',
+
+      // Static donation/payment link. If set, the footer links directly here
+      // and shows a QR code. Override via NUXT_PUBLIC_DONATION_URL.
+      donationUrl: 'https://toyyibpay.com/Donation-Link',
+    },
   },
 
   routeRules: {
