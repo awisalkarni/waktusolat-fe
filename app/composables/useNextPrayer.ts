@@ -39,8 +39,11 @@ export function useNextPrayer(inputGetter: () => NextPrayerInput) {
     const now = Date.now()
     const { today, tomorrow } = inputGetter()
 
-    // Imsak is a pre-Subuh reminder, not a solat, so exclude it from "next".
-    const order = PRAYER_ORDER.filter((k) => k !== 'imsak')
+    // Only notify for the 5 daily solat + Syuruk (end of Subuh).
+    const solatOrder: Array<keyof PrayerTimestamps> = [
+      'fajr', 'syuruk', 'dhuhr', 'asr', 'maghrib', 'isha',
+    ]
+    const order = solatOrder
 
     // Search today first, then tomorrow (so after Isyak we roll to Subuh).
     const candidates = [
