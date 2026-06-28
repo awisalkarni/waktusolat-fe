@@ -35,7 +35,7 @@ Malaysian Muslims need quick, accurate access to daily prayer times (waktu solat
 
 ### 5.2 Today's Prayer Times
 - Shows all eight daily times: Imsak, Subuh, Syuruk, Dhuha, Zohor, Asar, Maghrib, Isyak.
-- Times are formatted as `HH:mm` in `Asia/Kuala_Lumpur`.
+- Times are formatted as 12-hour `hh:mm AM/PM` in `Asia/Kuala_Lumpur`.
 - Today's row is visually highlighted.
 
 ### 5.3 Next Prayer Countdown
@@ -130,7 +130,95 @@ Vue app (pages/index.vue)
 - Event tracking for zone changes, donation clicks, and prayer-time views.
 - Privacy-focused alternative (e.g., Plausible or Fathom) as a configurable option.
 
-## 9. Deployment & Operations
+## 9. Mobile-First Value Additions
+
+These features are designed to make the app sticky enough that users want it on their home screen and feel it is worth supporting.
+
+### 9.1 Home Screen Widget / Shortcut (Android/iOS)
+- PWA install prompt so users can add the app to their home screen.
+- For Android: investigate a simple widget showing the next prayer and countdown.
+- For iOS: support Safari "Add to Home Screen" with a standalone display mode.
+
+### 9.2 Native App Export
+- **Capacitor (recommended):** wrap the Nuxt PWA as an Android/iOS app with minimal native code.
+- **Tauri (desktop):** build a lightweight Windows/macOS/Linux desktop app using the same web codebase.
+- App stores increase discoverability and give users a reason to donate ("support the app").
+
+### 9.3 Prayer Notifications
+- Browser notification before each prayer (customisable: all prayers or only Subuh/Maghrib).
+- Imsak notification 10 minutes before Subuh.
+- Optional daily summary notification in the morning.
+
+### 9.4 Qibla Direction
+- Use device orientation API to show a simple Qibla compass on mobile.
+- Useful for travelers and a strong "app-worthy" feature.
+
+### 9.5 Masjid / Surau Finder
+- Integrate Google Places or a curated list to show nearby mosques.
+- Filter by current prayer (e.g., "masjid near me for Maghrib").
+
+### 9.6 Prayer Journal / Checklist
+- Allow users to tick off prayers as they perform them.
+- Show a weekly/monthly streak view.
+- Keep data local-first (localStorage / IndexedDB); optional sync later.
+
+### 9.7 Ramadan Mode
+- Highlight Imsak, Subuh, and Maghrib during Ramadan.
+- Show countdown to Imsak and Maghrib for fasting.
+- Add Tarawih reminder after Isyak.
+
+### 9.8 Travel Mode
+- Save multiple favourite zones (e.g., hometown + workplace + travel destination).
+- Quick switcher in the header.
+
+### 9.9 Share / Invite
+- One-tap share current prayer times for the selected zone via WhatsApp / Telegram.
+- "Share this app" button with a pre-written Malay message.
+
+### 9.10 Accessibility & Customisation
+- Larger font mode for older users.
+- AM/PM vs 24-hour toggle (already implemented: AM/PM default).
+- Choice of notification sounds (azan snippets if licensing allows).
+
+## 10. Desktop Value Additions
+
+### 10.1 Always-On Widget
+- A small, floating desktop widget (via Tauri) showing the next prayer and countdown.
+- Minimise to system tray / menu bar.
+
+### 10.2 Monthly PDF Export
+- Generate and download a printable PDF timetable for the selected zone/month.
+- Reuses the existing `/jadual_solat/{zone}` upstream endpoint.
+
+### 10.3 Keyboard Shortcuts
+- Press `z` to open zone selector, `/` to focus search, `n` to jump to next prayer.
+
+### 10.4 Multi-City Dashboard
+- Side-by-side prayer times for several zones on one screen.
+- Useful for users managing teams or family across states.
+
+## 11. Monetisation & Donation Incentives
+
+### 11.1 Transparent Costs
+- Public "cost to run" page showing server/domain expenses.
+- Progress bar toward monthly hosting goal.
+
+### 11.2 Supporter Recognition
+- Optional name/list of supporters on a "Terima Kasih" page.
+- No ads, ever, for donors.
+
+### 11.3 Sponsor Links
+- Link to the developer (awislabs.com) and offer sponsored features for mosques or Islamic organisations.
+
+## 12. Technical Roadmap Priority
+
+1. **Phase 1 — PWA + Notifications** (highest impact, lowest effort)
+2. **Phase 2 — Prayer Journal + Favourites** (increases daily retention)
+3. **Phase 3 — Qibla + Masjid Finder** (app-worthy features)
+4. **Phase 4 — Capacitor/Tauri Export** (expand distribution)
+5. **Phase 5 — Desktop Widget + PDF Export** (desktop value)
+
+## 13. Deployment & Operations
 
 - **Server:** Ubuntu 22.04+ @ `43.134.175.91`
 - **App Directory:** `/var/www/waktusolatapp`
@@ -139,7 +227,7 @@ Vue app (pages/index.vue)
 - **Domain:** waktusolatapp.com
 - **CI/CD:** Manual git pull + build + PM2 restart (automation optional future enhancement).
 
-## 10. Success Metrics
+## 14. Success Metrics
 
 - Page loads in under 2 seconds on 3G.
 - Zero direct upstream API calls for cached zone/month combinations.
