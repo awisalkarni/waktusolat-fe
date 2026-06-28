@@ -321,12 +321,12 @@ const showSettings = ref(false)
       </section>
 
       <!-- Prayer times list -->
-      <section>
+      <section class="perspective-[800px]">
         <ul>
           <li
             v-for="(key, i) in PRAYER_ORDER"
             :key="key"
-            class="flex items-center justify-between px-6 py-3.5 transition-colors duration-500"
+            class="flex items-center justify-between px-6 py-3.5 transition-colors duration-500 prayer-row"
             :class="
               currentPrayerName === key
                 ? 'bg-amber-600'
@@ -334,6 +334,7 @@ const showSettings = ref(false)
                   ? 'bg-emerald-700'
                   : ''
             "
+            :style="{ animationDelay: `${i * 0.07}s` }"
           >
             <span class="flex items-center gap-2 font-medium">
               {{ PRAYER_LABELS[key] }}
@@ -573,5 +574,20 @@ const showSettings = ref(false)
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+@keyframes flip-in {
+  0% {
+    opacity: 0;
+    transform: rotateX(-40deg) translateZ(-60px);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateX(0deg) translateZ(0);
+  }
+}
+
+.prayer-row {
+  animation: flip-in 0.5s cubic-bezier(0.25, 1, 0.5, 1) both;
 }
 </style>

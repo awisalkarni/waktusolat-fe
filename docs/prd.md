@@ -70,6 +70,38 @@ Malaysian Muslims need quick, accurate access to daily prayer times (waktu solat
 - **Performance:** First load is server-rendered; subsequent navigation is client-side.
 - **Reliability:** Upstream API failures return user-friendly error messages.
 
+## 6A. Design Language
+
+### 6A.1 Visual Style
+- **Background:** Flat, solid medium-green (`#059669` / `emerald-600`) throughout.
+- **Typography:** Roboto (Google Fonts), crisp white text on green.
+- **Icons:** Line-art stroke SVGs in white, matching the flat minimal aesthetic.
+
+### 6A.2 Layout
+- **Hero dashboard (top ~40% viewport):** Massive current prayer time, prayer label, location (zone `daerah`), dual Gregorian + Hijri dates, minimalist sun icon, and settings gear (top-right).
+- **Prayer list (bottom ~60%):** Vertical list of all 8 daily times. Rows alternate between `emerald-600` (base) and `emerald-700` for subtle separation.
+- **Active prayer row:** Vibrant warm amber-orange (`amber-600`) background — stands out completely from the green theme.
+- **Next prayer badge:** "Seterusnya" pill on the upcoming prayer row.
+- **Settings panel:** Overlay triggered by gear icon, contains the zone selector.
+
+### 6A.3 Animation — 3D Perspective Rolling Flip-In
+- **Trigger:** When the view opens or data updates, prayer-list rows animate in sequentially from top to bottom.
+- **Starting state:** Each row begins with `rotateX(-40°)`, `translateZ(-60px)`, and `opacity: 0`.
+- **End state:** Flat facing the screen (`rotateX(0°)`), full opacity, no Z-offset.
+- **Easing:** `cubic-bezier(0.25, 1, 0.5, 1)` — snaps quickly then settles smoothly.
+- **Stagger:** Each successive row delays by `0.07s` via inline `animation-delay`.
+- **Parent perspective:** `perspective(800px)` on the list container for 3D depth.
+- **Fill mode:** `both` so rows hold their final state after animation completes.
+
+### 6A.4 Color Palette
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `bg-emerald-600` | `#059669` | Page background, default row, today row in timetable |
+| `bg-emerald-700` | `#047857` | Alternate prayer rows, card sections |
+| `bg-amber-600` | `#d97706` | Active prayer highlight |
+| `text-white` | `#ffffff` | All primary text |
+| `text-white/50–70` | — | Secondary/tertiary labels |
+
 ## 7. Architecture
 
 ```
@@ -83,9 +115,13 @@ Nuxt Nitro (port 3000)
     │
     ▼
 Vue app (pages/index.vue)
-    ├── ZoneSelect
-    ├── Next prayer card
-    ├── Today's times list
+    ├── ZoneSelect (in settings overlay)
+    ├── Hero dashboard
+    │   ├── Settings gear (toggles ZoneSelect overlay)
+    │   ├── Current prayer time (massive heading)
+    │   ├── Location + dual dates
+    │   ├── Sun icon + next-prayer countdown
+    │   └── Prayer times list (3D flip-in stagger animation)
     └── Monthly timetable
 ```
 
