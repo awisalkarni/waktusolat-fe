@@ -37,6 +37,14 @@ const { data: groups, pending: zonesPending } = await useFetch<ZoneGroup[]>(
   { key: 'zones', default: () => [] },
 )
 
+// Proactively cache API responses for offline support.
+if (import.meta.client && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+  navigator.serviceWorker.controller.postMessage({
+    type: 'CACHE_URLS',
+    urls: ['/api/zones'],
+  })
+}
+
 const { data: solat, pending: solatPending, error: solatError } =
   await useFetch<SolatResponse>(
     () => `/api/solat/${zone.value}`,
@@ -86,6 +94,22 @@ const notifications = usePrayerNotifications(
   () => today.value?.raw,
   () => tomorrow.value?.raw,
 )
+
+// Cache zone-specific API data once available.
+if (import.meta.client && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+  watch(
+    () => zone.value,
+    (z) => {
+      if (z) {
+        navigator.serviceWorker.controller?.postMessage({
+          type: 'CACHE_URLS',
+          urls: [`/api/solat/${z}`],
+        })
+      }
+    },
+    { immediate: true },
+  )
+}
 
 const installPrompt = ref<BeforeInstallPromptEvent | null>(null)
 const isInstallable = ref(false)

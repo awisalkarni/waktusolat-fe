@@ -32,6 +32,22 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'CACHE_URLS') {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then((cache) =>
+        Promise.allSettled(
+          event.data.urls.map((url) =>
+            fetch(url).then((r) => {
+              if (r.ok) cache.put(url, r)
+            }),
+          ),
+        ),
+      ),
+    )
+  }
+})
+
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
