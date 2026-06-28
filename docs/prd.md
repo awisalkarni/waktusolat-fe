@@ -127,9 +127,13 @@ Vue app (pages/index.vue)
 
 ## 8. Future Enhancements
 
-### 8.1 Automatic Location Detection
-- Use browser geolocation to call `GET /v2/solat/gps/{lat}/{long}` (or `/zones/{lat}/{long}`) and auto-select the nearest JAKIM zone.
-- Fallback gracefully if permission is denied.
+- ~~**8.1 Automatic Location Detection**~~ ✅ Done
+  - On mount, requests browser geolocation with `enableHighAccuracy: true`.
+  - Proxies upstream `GET /zones/{lat}/{lng}` via `/api/zone-by-gps` server route.
+  - Auto-selects the nearest JAKIM zone code.
+  - Displays pin icon + `(dikesan)` badge in the hero when auto-detected.
+  - User override: once the zone is manually changed, sets a `localStorage` flag (`waktusolatfe.location_overridden`) and never auto-detects again.
+  - Fallback: shows "Guna lokasi semasa" button in the hero and settings panel if geolocation is denied or fails.
 
 ### 8.2 Monthly / Yearly Navigation
 - Allow users to view prayer times for other months and years.
