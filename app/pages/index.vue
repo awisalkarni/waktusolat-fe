@@ -11,6 +11,26 @@ useHead({ title: 'Waktu Solat Malaysia' })
 
 const route = useRoute()
 const zone = useZonePersistence()
+const {
+  detect: detectLocation,
+  detecting,
+  detected,
+  status: locationStatus,
+  error: locationError,
+  markOverridden,
+  isOverridden,
+} = useAutoLocation(zone)
+
+// Call markOverridden when the user manually changes zone (not auto-detect)
+watch(zone, (val, old) => {
+  if (old && val !== old && !detecting.value) {
+    markOverridden()
+  }
+})
+
+onMounted(() => {
+  if (!isOverridden.value) detectLocation()
+})
 
 const { data: groups, pending: zonesPending } = await useFetch<ZoneGroup[]>(
   '/api/zones',
@@ -236,6 +256,17 @@ const showSettings = ref(false)
             :groups="groups ?? []"
             :loading="zonesPending"
           />
+          <button
+            class="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-white/20 px-4 py-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/10"
+            :disabled="detecting"
+            @click="detectLocation"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            </svg>
+            {{ detecting ? 'Mengesan...' : 'Guna lokasi semasa' }}
+          </button>
         </div>
       </div>
     </Transition>
@@ -298,11 +329,29 @@ const showSettings = ref(false)
 
         <!-- Location & dates -->
         <p class="mt-5 text-sm text-white/70">
+          <svg v-if="detected" class="-ml-0.5 inline h-3.5 w-3.5 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+          </svg>
           {{ zoneName }}
+          <span v-if="detected" class="text-xs text-white/40">(dikesan)</span>
         </p>
         <p class="mt-0.5 text-sm text-white/50">
           {{ todayHeader }} · {{ hijriLabel }}
         </p>
+
+        <!-- Location detection status -->
+        <div v-if="locationStatus === 'detecting'" class="mt-2 flex items-center gap-1.5 text-xs text-white/50">
+          <span class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-white/50" />
+          Mengesan lokasi...
+        </div>
+        <button
+          v-else-if="(locationStatus === 'denied' || locationStatus === 'failed') && !isOverridden"
+          class="mt-2 text-xs text-white/50 underline decoration-dotted underline-offset-2 hover:text-white/70"
+          @click="detectLocation"
+        >
+          Guna lokasi semasa
+        </button>
 
         <!-- Sun icon + countdown row -->
         <div class="mt-4 flex items-center gap-4">
