@@ -4,6 +4,16 @@ import {
   type PrayerTimestamps,
 } from '#shared/types/waktusolat'
 
+/** Prayer times that trigger a notification (excludes Imsak and Dhuha). */
+const NOTIFY_PRAYERS: Array<keyof PrayerTimestamps> = [
+  'fajr',
+  'syuruk',
+  'dhuhr',
+  'asr',
+  'maghrib',
+  'isha',
+]
+
 export interface PrayerNotificationState {
   supported: boolean
   permission: Ref<NotificationPermission>
@@ -63,11 +73,11 @@ export function usePrayerNotifications(
 
       // Build list of candidate prayers: today's + tomorrow's (after Isyak).
       const candidates = [
-        ...PRAYER_ORDER.map((name) => ({
+        ...NOTIFY_PRAYERS.map((name) => ({
           name,
           ts: todayRaw()?.[name],
         })),
-        ...PRAYER_ORDER.map((name) => ({
+        ...NOTIFY_PRAYERS.map((name) => ({
           name,
           ts: tomorrowRaw()?.[name],
         })),
