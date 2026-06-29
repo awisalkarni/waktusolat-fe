@@ -1,4 +1,4 @@
-const CACHE_NAME = 'waktusolat-v1'
+const CACHE_NAME = 'waktusolat-v2'
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -48,6 +48,14 @@ self.addEventListener('message', (event) => {
   }
 })
 
+const PRECACHE_PREFIXES = ['/_nuxt/', '/icon-', '/apple-touch-icon', '/favicon']
+const PRECACHE_PATHS = ['/', '/manifest.json']
+
+function isPrecacheUrl(url) {
+  if (PRECACHE_PATHS.some((p) => url.pathname === p)) return true
+  return PRECACHE_PREFIXES.some((p) => url.pathname.startsWith(p))
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
@@ -66,23 +74,32 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Static assets / pages: cache first, then network.
+  // Versioned assets (hashed filenames under /_nuxt/): cache first.
+  if (url.pathname.startsWith('/_nuxt/')) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached
+        return fetch(request).then((response) => {
+          if (response.ok) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()))
+          }
+          return response
+        })
+      }),
+    )
+    return
+  }
+
+  // Navigation & other pages: network first so users always get fresh HTML.
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached
-      return fetch(request).then((response) => {
-        if (
-          response.status === 200 &&
-          (request.destination === 'script' ||
-            request.destination === 'style' ||
-            request.destination === 'image' ||
-            request.mode === 'navigate')
-        ) {
-          const clone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+    fetch(request)
+      .then((response) => {
+        // Cache pre-cached paths only (not every random navigation URL).
+        if (response.ok && isPrecacheUrl(url)) {
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()))
         }
         return response
       })
-    }),
+      .catch(() => caches.match(request)),
   )
 })
