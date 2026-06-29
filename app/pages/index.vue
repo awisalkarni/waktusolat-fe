@@ -505,7 +505,7 @@ const showSettings = ref(false)
               <li
                 v-for="(key, i) in PRAYER_ORDER"
                 :key="key"
-                class="flex items-center justify-between py-3.5 transition-colors duration-500 prayer-row"
+                class="flex items-center justify-between px-6 py-3.5 transition-colors duration-500 prayer-row"
                 :class="
                   currentPrayerName === key
                     ? 'bg-amber-600'
