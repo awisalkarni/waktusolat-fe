@@ -496,16 +496,16 @@ const showSettings = ref(false)
         </section>
       </div>
 
-      <!-- Prayer list + Timetable (side by side on desktop) -->
-      <div class="mx-auto max-w-lg lg:max-w-6xl lg:px-6">
-        <div class="lg:flex lg:gap-6 lg:items-start">
-          <!-- Prayer times list -->
-          <section class="lg:w-80 lg:shrink-0 perspective-[800px]">
+      <!-- Prayer list + PWA + Donation (left col) + Timetable (right col) on desktop -->
+      <div class="mx-auto max-w-lg lg:max-w-6xl px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-[20rem_1fr] lg:gap-6">
+          <!-- Prayer times list — row 1 mobile / left-col row 1 desktop -->
+          <section class="perspective-[800px]">
             <ul>
               <li
                 v-for="(key, i) in PRAYER_ORDER"
                 :key="key"
-                class="flex items-center justify-between px-6 py-3.5 transition-colors duration-500 prayer-row"
+                class="flex items-center justify-between py-3.5 transition-colors duration-500 prayer-row"
                 :class="
                   currentPrayerName === key
                     ? 'bg-amber-600'
@@ -531,8 +531,8 @@ const showSettings = ref(false)
             </ul>
           </section>
 
-          <!-- Monthly timetable -->
-          <section class="mt-6 lg:mt-0 flex-1 px-6 lg:px-0">
+          <!-- Monthly timetable — row 2 mobile / right-col spanning all rows desktop -->
+          <section class="mt-6 lg:mt-0 lg:row-span-3">
             <div class="overflow-hidden rounded-xl bg-emerald-700">
               <!-- Month navigation -->
               <div class="flex items-center justify-between border-b border-emerald-600 px-4 py-3">
@@ -633,158 +633,157 @@ const showSettings = ref(false)
               </div>
             </div>
           </section>
-        </div>
-      </div>
 
-      <!-- Bottom sections (PWA, Donation, Footer — always centered narrow) -->
-      <div class="mx-auto max-w-lg px-6">
-        <!-- PWA & notifications -->
-        <section class="mt-6">
-          <div class="rounded-xl bg-emerald-700 px-4 py-4">
-            <h3 class="font-semibold">Pasang aplikasi & pemberitahuan</h3>
-            <p class="mt-1 text-sm text-white/60">
-              Tambah ke skrin utama untuk akses pantas dan terima pemberitahuan setiap waktu solat.
-            </p>
+          <!-- PWA & notifications — row 3 mobile / left-col row 2 desktop -->
+          <section class="mt-6">
+            <div class="rounded-xl bg-emerald-700 px-4 py-4">
+              <h3 class="font-semibold">Pasang aplikasi & pemberitahuan</h3>
+              <p class="mt-1 text-sm text-white/60">
+                Tambah ke skrin utama untuk akses pantas dan terima pemberitahuan setiap waktu solat.
+              </p>
 
-            <div class="mt-4 flex flex-wrap gap-3">
-              <button
-                v-if="isInstallable"
-                class="inline-flex items-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition-colors hover:bg-white/90"
-                @click="installPWA"
-              >
-                Pasang aplikasi
-              </button>
-
-              <button
-                v-else-if="isIOS"
-                class="inline-flex items-center rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white/70"
-                disabled
-              >
-                iOS: Tekan <strong class="mx-1">Share → Add to Home Screen</strong>
-              </button>
-
-              <button
-                v-if="notifications.supported"
-                class="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-colors"
-                :class="
-                  notifications.permission.value === 'granted'
-                    ? 'bg-white/15 text-white'
-                    : 'bg-white text-emerald-700 hover:bg-white/90'
-                "
-                :disabled="notifications.permission.value === 'denied'"
-                @click="notifications.requestPermission"
-              >
-                <template v-if="notifications.permission.value === 'granted'">
-                  Pemberitahuan aktif
-                </template>
-                <template v-else-if="notifications.permission.value === 'denied'">
-                  Pemberitahuan disekat
-                </template>
-                <template v-else>
-                  Aktifkan pemberitahuan
-                </template>
-              </button>
-            </div>
-
-            <p
-              v-if="notifications.permission.value === 'denied'"
-              class="mt-2 text-xs text-white/50"
-            >
-              Anda perlu benarkan pemberitahuan dalam tetapan pelayar untuk mengaktifkannya.
-            </p>
-          </div>
-        </section>
-
-        <!-- Donation -->
-        <section
-          v-if="donationUrl || config.toyyibpaySecretKey"
-          class="mt-6"
-        >
-          <div class="rounded-xl bg-emerald-700 px-4 py-4">
-            <h3 class="font-semibold">Sokong projek ini</h3>
-            <p class="mt-1 text-sm text-white/60">
-              Pelayan dan domain memerlukan kos. Sumbangan anda membantu mengekalkan laman ini.
-            </p>
-
-            <div
-              v-if="donationSuccess"
-              class="mt-3 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white"
-            >
-              Terima kasih atas sumbangan anda! Semoga Allah membalas jasa baik anda.
-            </div>
-
-            <div
-              v-else-if="donationUrl"
-              class="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center"
-            >
-              <img
-                :src="`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(donationUrl)}`"
-                alt="QR kod sumbangan"
-                class="h-28 w-28 rounded-lg bg-white p-1 shadow-sm"
-                loading="lazy"
-              >
-              <div class="flex flex-col gap-2">
-                <a
-                  :href="donationUrl"
-                  target="_blank"
-                  rel="noopener"
-                  class="inline-flex items-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition-colors hover:bg-white/90"
-                >
-                  Sumbang sekarang
-                </a>
-                <span class="text-xs text-white/50">
-                  Imbas QR kod atau klik butang untuk menyumbang.
-                </span>
-              </div>
-            </div>
-
-            <div v-else class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-              <div class="flex flex-wrap gap-2">
+              <div class="mt-4 flex flex-wrap gap-3">
                 <button
-                  v-for="preset in donationPresets"
-                  :key="preset.value"
-                  type="button"
-                  class="rounded-lg border border-white/20 px-3 py-2 text-sm font-medium transition-colors"
-                  :class="
-                    donationAmount === preset.value
-                      ? 'bg-white text-emerald-700'
-                      : 'text-white/70 hover:bg-white/10'
-                  "
-                  @click="donationAmount = preset.value"
+                  v-if="isInstallable"
+                  class="inline-flex items-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition-colors hover:bg-white/90"
+                  @click="installPWA"
                 >
-                  {{ preset.label }}
+                  Pasang aplikasi
+                </button>
+
+                <button
+                  v-else-if="isIOS"
+                  class="inline-flex items-center rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white/70"
+                  disabled
+                >
+                  iOS: Tekan <strong class="mx-1">Share → Add to Home Screen</strong>
+                </button>
+
+                <button
+                  v-if="notifications.supported"
+                  class="inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-colors"
+                  :class="
+                    notifications.permission.value === 'granted'
+                      ? 'bg-white/15 text-white'
+                      : 'bg-white text-emerald-700 hover:bg-white/90'
+                  "
+                  :disabled="notifications.permission.value === 'denied'"
+                  @click="notifications.requestPermission"
+                >
+                  <template v-if="notifications.permission.value === 'granted'">
+                    Pemberitahuan aktif
+                  </template>
+                  <template v-else-if="notifications.permission.value === 'denied'">
+                    Pemberitahuan disekat
+                  </template>
+                  <template v-else>
+                    Aktifkan pemberitahuan
+                  </template>
                 </button>
               </div>
 
-              <div class="flex flex-1 items-center gap-2">
-                <span class="text-sm text-white/50">RM</span>
-                <input
-                  v-model.number="donationAmount"
-                  type="number"
-                  min="100"
-                  step="100"
-                  class="w-24 rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white placeholder-white/40 focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/40"
-                  placeholder="500"
-                >
-                <span class="text-xs text-white/40">sen</span>
+              <p
+                v-if="notifications.permission.value === 'denied'"
+                class="mt-2 text-xs text-white/50"
+              >
+                Anda perlu benarkan pemberitahuan dalam tetapan pelayar untuk mengaktifkannya.
+              </p>
+            </div>
+          </section>
+
+          <!-- Donation — row 4 mobile / left-col row 3 desktop -->
+          <section
+            v-if="donationUrl || config.toyyibpaySecretKey"
+            class="mt-6"
+          >
+            <div class="rounded-xl bg-emerald-700 px-4 py-4">
+              <h3 class="font-semibold">Sokong projek ini</h3>
+              <p class="mt-1 text-sm text-white/60">
+                Pelayan dan domain memerlukan kos. Sumbangan anda membantu mengekalkan laman ini.
+              </p>
+
+              <div
+                v-if="donationSuccess"
+                class="mt-3 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white"
+              >
+                Terima kasih atas sumbangan anda! Semoga Allah membalas jasa baik anda.
               </div>
 
-              <button
-                class="inline-flex items-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition-colors hover:bg-white/90 disabled:opacity-60"
-                :disabled="donationPending || donationAmount < 100"
-                @click="donate"
+              <div
+                v-else-if="donationUrl"
+                class="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center"
               >
-                {{ donationPending ? 'Memuat…' : 'Sumbang' }}
-              </button>
+                <img
+                  :src="`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(donationUrl)}`"
+                  alt="QR kod sumbangan"
+                  class="h-28 w-28 rounded-lg bg-white p-1 shadow-sm"
+                  loading="lazy"
+                >
+                <div class="flex flex-col gap-2">
+                  <a
+                    :href="donationUrl"
+                    target="_blank"
+                    rel="noopener"
+                    class="inline-flex items-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition-colors hover:bg-white/90"
+                  >
+                    Sumbang sekarang
+                  </a>
+                  <span class="text-xs text-white/50">
+                    Imbas QR kod atau klik butang untuk menyumbang.
+                  </span>
+                </div>
+              </div>
+
+              <div v-else class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="preset in donationPresets"
+                    :key="preset.value"
+                    type="button"
+                    class="rounded-lg border border-white/20 px-3 py-2 text-sm font-medium transition-colors"
+                    :class="
+                      donationAmount === preset.value
+                        ? 'bg-white text-emerald-700'
+                        : 'text-white/70 hover:bg-white/10'
+                    "
+                    @click="donationAmount = preset.value"
+                  >
+                    {{ preset.label }}
+                  </button>
+                </div>
+
+                <div class="flex flex-1 items-center gap-2">
+                  <span class="text-sm text-white/50">RM</span>
+                  <input
+                    v-model.number="donationAmount"
+                    type="number"
+                    min="100"
+                    step="100"
+                    class="w-24 rounded-lg border border-white/20 bg-transparent px-3 py-2 text-sm text-white placeholder-white/40 focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/40"
+                    placeholder="500"
+                  >
+                  <span class="text-xs text-white/40">sen</span>
+                </div>
+
+                <button
+                  class="inline-flex items-center rounded-lg bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition-colors hover:bg-white/90 disabled:opacity-60"
+                  :disabled="donationPending || donationAmount < 100"
+                  @click="donate"
+                >
+                  {{ donationPending ? 'Memuat…' : 'Sumbang' }}
+                </button>
+              </div>
+
+              <p v-if="donationError" class="mt-2 text-sm text-red-300">
+                {{ donationError }}
+              </p>
             </div>
+          </section>
+        </div>
+      </div>
 
-            <p v-if="donationError" class="mt-2 text-sm text-red-300">
-              {{ donationError }}
-            </p>
-          </div>
-        </section>
-
-        <!-- Footer -->
+      <!-- Footer -->
+      <div class="mx-auto max-w-lg px-6">
         <footer class="pb-8 pt-8 text-center text-xs text-white/40">
           Data daripada
           <a
