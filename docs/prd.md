@@ -139,9 +139,11 @@ Vue app (pages/index.vue)
 - Allow users to view prayer times for other months and years.
 - Useful for travel planning and Ramadan preparation.
 
-### 8.3 Notifications
-- Browser push notification or badge reminder before the next prayer.
-- Optional notification 10 minutes before Subuh (Imsak).
+### ~~8.3 Notifications~~ ✅ Done
+- Browser notification fires 5 minutes before each prayer (Subuh, Syuruk, Zohor, Asar, Maghrib, Isyak).
+- Imsak notification fires 10 minutes before Subuh.
+- Notifications include the prayer name, formatted time, and "5 minit lagi" / "10 minit sebelum Subuh".
+- Permission and enable/disable handled via `usePrayerNotifications` composable; one-minute polling interval for reliable timing.
 
 ### 8.4 Hijri Calendar Display
 - Show current Hijri date more prominently.
@@ -150,11 +152,17 @@ Vue app (pages/index.vue)
 ### 8.5 Tarawih / Special Times
 - Display special prayer times during Ramadan if available from upstream.
 
-### 8.6 Offline Support
-- Cache the current month's data in the browser (Service Worker / Workbox) so the app works offline after first load.
+### ~~8.6 Offline Support~~ ✅ Done
+- SW install precaches static assets (/, manifest, icons).
+- Network-first strategy for `/api/*` routes with cache fallback.
+- Page proactively sends `/api/zones` and `/api/solat/{zone}` URLs to the SW via `postMessage` after first fetch, so the current zone's data is cached for offline.
+- SW message handler (`CACHE_URLS`) caches arbitrary URLs on demand from the client.
 
-### 8.7 PWA
-- Add a web app manifest and service worker so users can install the app to their home screen.
+### ~~8.7 PWA~~ ✅ Done
+- Web app manifest with standalone display, maskable icons.
+- Service worker: static-asset precache, network-first API caching, message-based on-demand caching.
+- Install prompt handled client-side via `beforeinstallprompt` event.
+- iOS instruction text for Safari "Add to Home Screen".
 
 ### 8.8 Theme
 - Dark mode toggle.
@@ -252,7 +260,7 @@ These features are designed to make the app sticky enough that users want it on 
 
 ## 12. Technical Roadmap Priority
 
-1. **Phase 1 — PWA + Notifications** (highest impact, lowest effort)
+1. ✅ ~~**Phase 1 — PWA + Notifications**~~ (highest impact, lowest effort)
 2. **Phase 2 — Prayer Journal + Favourites** (increases daily retention)
 3. **Phase 3 — Qibla + Masjid Finder** (app-worthy features)
 4. **Phase 4 — Capacitor/Tauri Export** (expand distribution)

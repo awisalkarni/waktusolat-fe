@@ -97,15 +97,13 @@ const notifications = usePrayerNotifications(
 
 // Cache zone-specific API data once available.
 if (import.meta.client && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+  // Cache current-zone URL whenever zone or browse month changes
   watch(
-    () => zone.value,
-    (z) => {
-      if (z) {
-        navigator.serviceWorker.controller?.postMessage({
-          type: 'CACHE_URLS',
-          urls: [`/api/solat/${z}`],
-        })
-      }
+    [zone, browseMonth, browseYear],
+    ([z, m, y]) => {
+      if (!z) return
+      const urls = [`/api/solat/${z}${m && y ? `?year=${y}&month=${m}` : ''}`]
+      navigator.serviceWorker.controller?.postMessage({ type: 'CACHE_URLS', urls })
     },
     { immediate: true },
   )
@@ -151,6 +149,112 @@ const monthLabel = computed(() =>
     : '',
 )
 
+// --- 8.2 Monthly / Yearly Navigation ---
+const browseMonth = ref(0)
+const browseYear = ref(0)
+const browseSolat = ref<SolatResponse | null>(null)
+const browsePending = ref(false)
+const browseError = ref(false)
+
+watch([browseMonth, browseYear], async ([m, y]) => {
+  if (m === 0 || y === 0) {
+    browseSolat.value = null
+    browseError.value = false
+    return
+  }
+  browsePending.value = true
+  browseError.value = false
+  try {
+    browseSolat.value = await $fetch<SolatResponse>(`/api/solat/${zone.value}`, {
+      query: { year: y, month: m },
+    })
+  } catch {
+    browseSolat.value = null
+    browseError.value = true
+  } finally {
+    browsePending.value = false
+  }
+}, { immediate: false })
+
+function goPrevMonth() {
+  let m = browseMonth.value || solat.value?.monthNumber || 1
+  let y = browseYear.value || solat.value?.year || new Date().getFullYear()
+  m--
+  if (m === 0) { m = 12; y-- }
+  browseMonth.value = m
+  browseYear.value = y
+}
+
+function goNextMonth() {
+  let m = browseMonth.value || solat.value?.monthNumber || 1
+  let y = browseYear.value || solat.value?.year || new Date().getFullYear()
+  m++
+  if (m === 13) { m = 1; y++ }
+  browseMonth.value = m
+  browseYear.value = y
+}
+
+function goToday() {
+  browseMonth.value = 0
+  browseYear.value = 0
+  browseSolat.value = null
+}
+
+const isBrowsing = computed(() => browseMonth.value !== 0)
+
+const timetableData = computed(() =>
+  isBrowsing.value ? browseSolat.value : solat.value,
+)
+
+const timetableMonthLabel = computed(() => {
+  if (!timetableData.value) return monthLabel.value
+  return `${timetableData.value.monthName} ${timetableData.value.year}`
+})
+
+const isCurrentMonth = computed(() =>
+  !isBrowsing.value ||
+  (browseMonth.value === solat.value?.monthNumber && browseYear.value === solat.value?.year)
+)
+
+const BULAN_MALAY: Record<number, string> = {
+  1: 'Januari', 2: 'Februari', 3: 'Mac', 4: 'April',
+  5: 'Mei', 6: 'Jun', 7: 'Julai', 8: 'Ogos',
+  9: 'September', 10: 'Oktober', 11: 'November', 12: 'Disember',
+}
+
+function formatHijri(h: string): string {
+  if (!h) return ''
+  const parts = h.split('-')
+  if (parts.length !== 3) return h
+  const monthName = HIJRI_MONTHS[parts[1]] || parts[1]
+  const day = parseInt(parts[2], 10)
+  return `${day} ${monthName}`
+}
+
+function formatHijriLong(h: string): string {
+  if (!h) return ''
+  const parts = h.split('-')
+  if (parts.length !== 3) return h
+  const monthName = HIJRI_MONTHS[parts[1]] || parts[1]
+  const day = parseInt(parts[2], 10)
+  return `${day} ${monthName} ${parts[0]}H`
+}
+
+// Weekday names in Malay for any date in MYT.
+const HARI_MALAY = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu']
+
+function formatDayHeader(dayNumber: number, data: SolatResponse): string {
+  // Guess the weekday by constructing a date in the response's month/year
+  const y = data.year
+  const m = data.monthNumber
+  const d = new Date(Date.UTC(y, m - 1, dayNumber))
+  // The above constructs in local timezone which may shift the date by hours.
+  // Build a date string in YYYY-MM-DD and parse in UTC to avoid DST issues.
+  const utcStr = `${y}-${String(m).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}T00:00:00Z`
+  const dt = new Date(utcStr)
+  return HARI_MALAY[dt.getUTCDay()]
+}
+
 const todayHeader = computed(() => {
   const d = new Date()
   return new Intl.DateTimeFormat('ms-MY', {
@@ -168,13 +272,7 @@ const HIJRI_MONTHS: Record<string, string> = {
 }
 
 const hijriLabel = computed(() => {
-  const h = today.value?.hijri
-  if (!h) return ''
-  const parts = h.split('-')
-  if (parts.length !== 3) return h
-  const monthName = HIJRI_MONTHS[parts[1]] || parts[1]
-  const day = parseInt(parts[2], 10)
-  return `${day} ${monthName} ${parts[0]}H`
+  return formatHijriLong(today.value?.hijri ?? '')
 })
 
 const zoneName = computed(() => {
@@ -361,7 +459,10 @@ const showSettings = ref(false)
           <span v-if="detected" class="text-xs text-white/40">(dikesan)</span>
         </p>
         <p class="mt-0.5 text-sm text-white/50">
-          {{ todayHeader }} · {{ hijriLabel }}
+          {{ todayHeader }}
+        </p>
+        <p class="text-sm text-white/40" dir="auto">
+          {{ hijriLabel || '—' }}
         </p>
 
         <!-- Location detection status -->
@@ -428,13 +529,62 @@ const showSettings = ref(false)
       <!-- Monthly timetable -->
       <section class="mt-6 px-6">
         <div class="overflow-hidden rounded-xl bg-emerald-700">
-          <div class="border-b border-emerald-600 px-4 py-3 text-sm font-semibold">
-            Jadual {{ monthLabel }}
+          <!-- Month navigation -->
+          <div class="flex items-center justify-between border-b border-emerald-600 px-4 py-3">
+            <button
+              class="rounded-lg p-1.5 text-white/60 hover:bg-emerald-600 hover:text-white disabled:opacity-30"
+              :disabled="browsePending"
+              @click="goPrevMonth"
+            >
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold">
+                Jadual {{ timetableMonthLabel }}
+              </span>
+              <button
+                v-if="isBrowsing"
+                class="rounded bg-emerald-600 px-2 py-0.5 text-[10px] font-medium text-white/70 hover:text-white"
+                @click="goToday"
+              >
+                Hari ini
+              </button>
+            </div>
+
+            <button
+              class="rounded-lg p-1.5 text-white/60 hover:bg-emerald-600 hover:text-white disabled:opacity-30"
+              :disabled="browsePending"
+              @click="goNextMonth"
+            >
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
-          <div class="overflow-x-auto">
+
+          <!-- Browse loading / error -->
+          <div
+            v-if="browsePending"
+            class="px-4 py-6 text-center text-sm text-white/50"
+          >
+            Memuatkan jadual...
+          </div>
+          <div
+            v-else-if="browseError"
+            class="px-4 py-6 text-center text-sm text-red-300"
+          >
+            Gagal memuatkan jadual untuk {{ timetableMonthLabel }}.
+          </div>
+
+          <div v-else class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead class="bg-emerald-800/50 text-xs uppercase text-white/50">
                 <tr>
+                  <th class="min-w-[2rem] px-2 py-2 text-left">H</th>
+                  <th class="min-w-[4.5rem] px-2 py-2 text-left whitespace-nowrap">Hijri</th>
                   <th class="min-w-[2.5rem] px-2 py-2 text-left">Hari</th>
                   <th
                     v-for="key in PRAYER_ORDER"
@@ -447,15 +597,21 @@ const showSettings = ref(false)
               </thead>
               <tbody class="divide-y divide-emerald-600">
                 <tr
-                  v-for="p in solat?.prayers"
+                  v-for="p in (timetableData?.prayers ?? [])"
                   :key="p.day"
                   class="transition-colors duration-500"
                   :class="
-                    today && p.day === today.day
+                    isCurrentMonth && today && p.day === today.day
                       ? 'bg-emerald-600'
                       : 'hover:bg-emerald-600/50'
                   "
                 >
+                  <td class="px-2 py-1.5 font-medium text-white/80">
+                    {{ formatDayHeader(p.day, timetableData!) }}
+                  </td>
+                  <td class="px-2 py-1.5 font-mono text-[11px] text-white/50 whitespace-nowrap">
+                    {{ formatHijri(p.hijri) }}
+                  </td>
                   <td class="px-2 py-1.5 font-medium text-white/80">
                     {{ p.day }}
                   </td>
