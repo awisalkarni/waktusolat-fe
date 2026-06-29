@@ -95,20 +95,6 @@ const notifications = usePrayerNotifications(
   () => tomorrow.value?.raw,
 )
 
-// Cache zone-specific API data once available.
-if (import.meta.client && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
-  // Cache current-zone URL whenever zone or browse month changes
-  watch(
-    [zone, browseMonth, browseYear],
-    ([z, m, y]) => {
-      if (!z) return
-      const urls = [`/api/solat/${z}${m && y ? `?year=${y}&month=${m}` : ''}`]
-      navigator.serviceWorker.controller?.postMessage({ type: 'CACHE_URLS', urls })
-    },
-    { immediate: true },
-  )
-}
-
 const installPrompt = ref<BeforeInstallPromptEvent | null>(null)
 const isInstallable = ref(false)
 const isIOS = ref(false)
@@ -155,6 +141,19 @@ const browseYear = ref(0)
 const browseSolat = ref<SolatResponse | null>(null)
 const browsePending = ref(false)
 const browseError = ref(false)
+
+// Cache zone-specific API data once available.
+if (import.meta.client && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+  watch(
+    [zone, browseMonth, browseYear],
+    ([z, m, y]) => {
+      if (!z) return
+      const urls = [`/api/solat/${z}${m && y ? `?year=${y}&month=${m}` : ''}`]
+      navigator.serviceWorker.controller?.postMessage({ type: 'CACHE_URLS', urls })
+    },
+    { immediate: true },
+  )
+}
 
 watch([browseMonth, browseYear], async ([m, y]) => {
   if (m === 0 || y === 0) {
