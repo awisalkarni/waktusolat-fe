@@ -135,9 +135,13 @@ Vue app (pages/index.vue)
   - User override: once the zone is manually changed, sets a `localStorage` flag (`waktusolatfe.location_overridden`) and never auto-detects again.
   - Fallback: shows "Guna lokasi semasa" button in the hero and settings panel if geolocation is denied or fails.
 
-### 8.2 Monthly / Yearly Navigation
-- Allow users to view prayer times for other months and years.
-- Useful for travel planning and Ramadan preparation.
+### ~~8.2 Monthly / Yearly Navigation~~ ✅ Done
+- Left/right chevron buttons above the timetable to cycle through months.
+- "Hari ini" quick-reset button appears when browsing a non-current month.
+- Browsed month fetched via separate `$fetch` with `?year=&month=` query params.
+- Timetable falls back to current month when not browsing.
+- Loading and error states for browse fetch.
+- Server already supported the query params — UI only.
 
 ### ~~8.3 Notifications~~ ✅ Done
 - Browser notification fires 5 minutes before each prayer (Subuh, Syuruk, Zohor, Asar, Maghrib, Isyak).
@@ -145,9 +149,11 @@ Vue app (pages/index.vue)
 - Notifications include the prayer name, formatted time, and "5 minit lagi" / "10 minit sebelum Subuh".
 - Permission and enable/disable handled via `usePrayerNotifications` composable; one-minute polling interval for reliable timing.
 
-### 8.4 Hijri Calendar Display
-- Show current Hijri date more prominently.
-- Optionally show full Hijri calendar alongside Gregorian dates.
+### ~~8.4 Hijri Calendar Display~~ ✅ Done
+- Hijri date shown on its own line below the Gregorian date in the hero dashboard.
+- Full Hijri calendar column in the monthly timetable (day + Malay month name, e.g. "14 Ramadan").
+- Weekday names in Malay (Ahad–Sabtu) shown in a dedicated column.
+- `formatHijri` / `formatHijriLong` helpers for consistent display.
 
 ### 8.5 Tarawih / Special Times
 - Display special prayer times during Ramadan if available from upstream.
