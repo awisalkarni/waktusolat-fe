@@ -449,49 +449,50 @@ const showSettings = ref(false)
             {{ heroIsCurrent ? 'Waktu solat sekarang' : 'Waktu solat seterusnya' }}
           </p>
 
-          <!-- Location & dates -->
-          <p class="mt-5 text-sm text-white/70">
-            <svg v-if="detected" class="-ml-0.5 inline h-3.5 w-3.5 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-            </svg>
-            {{ zoneName }}
-            <span v-if="detected" class="text-xs text-white/40">(dikesan)</span>
+          <!-- Location + dates compact row -->
+          <p class="mt-5 flex flex-wrap items-baseline gap-x-2 text-sm text-white/70">
+            <span class="flex items-center gap-1">
+              <svg v-if="detected" class="inline h-3 w-3 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+              </svg>
+              {{ zoneName }}
+              <span v-if="detected" class="text-[10px] text-white/40">(dikesan)</span>
+            </span>
+            <span class="text-white/40">·</span>
+            <span class="text-white/50">{{ todayHeader }}</span>
+            <span class="text-white/40">·</span>
+            <span class="font-medium text-white/60" dir="auto">{{ hijriLabel || '—' }}</span>
           </p>
-          <p class="mt-0.5 text-sm text-white/50">
-            {{ todayHeader }}
-          </p>
-          <p class="text-sm text-white/40" dir="auto">
-            {{ hijriLabel || '—' }}
-          </p>
-
-          <!-- Location detection status -->
-          <div v-if="locationStatus === 'detecting'" class="mt-2 flex items-center gap-1.5 text-xs text-white/50">
-            <span class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-white/50" />
-            Mengesan lokasi...
-          </div>
-          <button
-            v-else-if="(locationStatus === 'denied' || locationStatus === 'failed') && !isOverridden"
-            class="mt-2 text-xs text-white/50 underline decoration-dotted underline-offset-2 hover:text-white/70"
-            @click="detectLocation"
-          >
-            Guna lokasi semasa
-          </button>
 
           <!-- Sun icon + countdown row -->
-          <div class="mt-4 flex items-center gap-4">
-            <svg class="h-6 w-6 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <div class="mt-4 flex items-center gap-3">
+            <svg class="h-5 w-5 text-white/30 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <circle cx="12" cy="12" r="4" />
               <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke-linecap="round" />
             </svg>
+            <span class="text-sm text-white/60">Seterusnya</span>
             <p
-              class="font-mono text-base tabular-nums tracking-tight transition-transform duration-200"
+              class="font-mono text-base tabular-nums tracking-tight text-white/90 transition-transform duration-200"
               :class="countdownChanged ? 'scale-105' : ''"
               aria-live="polite"
             >
               {{ next.label }} dalam {{ next.countdown }}
             </p>
           </div>
+
+          <!-- Location detection status -->
+          <div v-if="locationStatus === 'detecting'" class="mt-3 flex items-center gap-1.5 text-xs text-white/50">
+            <span class="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-white/50" />
+            Mengesan lokasi...
+          </div>
+          <button
+            v-else-if="(locationStatus === 'denied' || locationStatus === 'failed') && !isOverridden"
+            class="mt-3 text-xs text-white/50 underline decoration-dotted underline-offset-2 hover:text-white/70"
+            @click="detectLocation"
+          >
+            Guna lokasi semasa
+          </button>
         </section>
       </div>
 
@@ -504,13 +505,11 @@ const showSettings = ref(false)
               <li
                 v-for="(key, i) in PRAYER_ORDER"
                 :key="key"
-                class="flex items-center justify-between px-6 py-3.5 transition-colors duration-500 prayer-row"
+                class="flex items-center justify-between px-6 py-3.5 transition-colors duration-500 prayer-row border-b border-white/5"
                 :class="
                   currentPrayerName === key
-                    ? 'bg-amber-600'
-                    : i % 2 === 1
-                      ? 'bg-emerald-700'
-                      : ''
+                    ? 'bg-amber-600 border-b-amber-600'
+                    : ''
                 "
                 :style="{ animationDelay: `${i * 0.07}s` }"
               >
@@ -523,7 +522,7 @@ const showSettings = ref(false)
                     Seterusnya
                   </span>
                 </span>
-                <span class="font-mono text-lg tabular-nums">
+                <span class="font-mono text-lg tabular-nums tracking-tight text-white/90">
                   {{ today!.times[key] }}
                 </span>
               </li>
@@ -585,21 +584,21 @@ const showSettings = ref(false)
 
               <div v-else class="overflow-x-auto">
                 <table class="w-full text-sm">
-                  <thead class="bg-emerald-800/50 text-xs uppercase text-white/50">
-                    <tr>
-                      <th class="min-w-[2rem] px-2 py-2 text-left">H</th>
-                      <th class="min-w-[4.5rem] px-2 py-2 text-left whitespace-nowrap">Hijri</th>
-                      <th class="min-w-[2.5rem] px-2 py-2 text-left">Hari</th>
+                  <thead class="sticky top-0 z-10">
+                    <tr class="bg-emerald-800 text-[11px] font-semibold uppercase tracking-wider text-white/60">
+                      <th class="min-w-[2rem] px-2 py-2.5 text-left">H</th>
+                      <th class="min-w-[4.5rem] px-2 py-2.5 text-left whitespace-nowrap">Hijri</th>
+                      <th class="min-w-[2.5rem] px-2 py-2.5 text-left">Hari</th>
                       <th
                         v-for="key in PRAYER_ORDER"
                         :key="key"
-                        class="min-w-[4rem] px-2 py-2 text-right whitespace-nowrap"
+                        class="min-w-[4rem] px-2 py-2.5 text-right whitespace-nowrap"
                       >
                         {{ PRAYER_LABELS[key] }}
                       </th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-emerald-600">
+                  <tbody class="divide-y divide-white/5">
                     <tr
                       v-for="p in (timetableData?.prayers ?? [])"
                       :key="p.day"
@@ -635,7 +634,7 @@ const showSettings = ref(false)
 
           <!-- PWA & notifications — row 3 mobile / left-col row 2 desktop -->
           <section class="mt-6">
-            <div class="rounded-xl bg-emerald-700 px-4 py-4">
+            <div class="rounded-xl bg-emerald-700/60 px-4 py-4 ring-1 ring-white/5">
               <h3 class="font-semibold">Pasang aplikasi & pemberitahuan</h3>
               <p class="mt-1 text-sm text-white/60">
                 Tambah ke skrin utama untuk akses pantas dan terima pemberitahuan setiap waktu solat.
@@ -695,7 +694,7 @@ const showSettings = ref(false)
             v-if="donationUrl || config.toyyibpaySecretKey"
             class="mt-6"
           >
-            <div class="rounded-xl bg-emerald-700 px-4 py-4">
+            <div class="rounded-xl bg-emerald-700/60 px-4 py-4 ring-1 ring-white/5">
               <h3 class="font-semibold">Sokong projek ini</h3>
               <p class="mt-1 text-sm text-white/60">
                 Pelayan dan domain memerlukan kos. Sumbangan anda membantu mengekalkan laman ini.
